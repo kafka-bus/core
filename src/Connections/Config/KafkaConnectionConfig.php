@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace KafkaBus\Core\Connections\Config;
 
+use KafkaBus\Core\Interfaces\Connections\ConnectionConfigInterface;
+
 final readonly class KafkaConnectionConfig implements ConnectionConfigInterface
 {
     /**

@@ -2,7 +2,7 @@
 
 namespace KafkaBus\Core\Testing\Messages;
 
-final readonly class ConsumerHandlerFaker
+final class ConsumerHandlerFaker
 {
     public function __invoke(string $message): void
     {

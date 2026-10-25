@@ -2,7 +2,6 @@
 
 namespace KafkaBus\Core\Testing\Consumers;
 
-use KafkaBus\Core\Topics\TopicRegistry;
 use RdKafka\Message;
 use JsonException;
 
@@ -40,9 +39,9 @@ class MessageFactory
         return $this->immutableSet('key', $key);
     }
 
-    public function withTopicKey(string $topicKey, TopicRegistry $registry = null): static
+    public function withTopicKey(?string $topicKey): static
     {
-        return $this->immutableSet('topicKey', $registry?->tryGetTopicName($topicKey) ?? $topicKey);
+        return $this->immutableSet('topicKey', $topicKey);
     }
 
     public function withPartition(int $partition): static

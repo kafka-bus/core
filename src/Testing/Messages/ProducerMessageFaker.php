@@ -2,12 +2,12 @@
 
 namespace KafkaBus\Core\Testing\Messages;
 
-use KafkaBus\Core\Producers\Messages\HasHeaders;
-use KafkaBus\Core\Producers\Messages\HasPartition;
-use KafkaBus\Core\Producers\Messages\ProducerMessageInterface;
+use KafkaBus\Core\Interfaces\Producers\Messages\HasHeaders;
+use KafkaBus\Core\Interfaces\Producers\Messages\HasPartition;
+use KafkaBus\Core\Interfaces\Producers\Messages\ProducerMessageInterface;
 use Stringable;
 
-final readonly class ProducerMessageFaker implements HasHeaders, HasPartition, ProducerMessageInterface
+final class ProducerMessageFaker implements HasHeaders, HasPartition, ProducerMessageInterface
 {
     /**
      * @param string $message
@@ -15,9 +15,9 @@ final readonly class ProducerMessageFaker implements HasHeaders, HasPartition, P
      * @param int $partition
      */
     public function __construct(
-        private string $message,
-        private array $headers = [],
-        private int $partition = -1,
+        protected string $message,
+        protected array $headers = [],
+        protected int $partition = -1,
     ) {
     }
 

@@ -2,15 +2,21 @@
 
 namespace KafkaBus\Core\Tests;
 
-use KafkaBus\Core\Producers\Messages\ProducerMessage;
-use KafkaBus\Core\Publishers\PublisherFactory;
-use KafkaBus\Core\Publishers\PublisherStreamFactory;
-use KafkaBus\Core\Publishers\Routing\PublisherRoutesBuilder;
-use KafkaBus\Core\Testing\Assertions\TestoAssertionDriver;
-use KafkaBus\Core\Testing\BusFaker;
+use KafkaBus\Core\Bus;
+use KafkaBus\Core\Bus\Listeners\ListenerFactory;
+use KafkaBus\Core\Bus\Publishers\PublisherFactory;
+use KafkaBus\Core\Bus\Publishers\Router\PublisherRoutes;
+use KafkaBus\Core\Bus\Publishers\Router\Route;
+use KafkaBus\Core\Bus\ThreadFactory;
+use KafkaBus\Core\Bus\ThreadRegistry;
+use KafkaBus\Core\Consumers\ConsumerStreamFactory;
+use KafkaBus\Core\Producers\ProducerStreamFactory;
+use KafkaBus\Core\Testing\Connections\ConnectionFaker;
+use KafkaBus\Core\Testing\Connections\ConnectionRegistryFaker;
 use KafkaBus\Core\Testing\Messages\ProducerMessageFaker;
 use KafkaBus\Core\Topics\Topic;
 use KafkaBus\Core\Topics\TopicRegistry;
+use Testo\Assert;
 use Testo\Test;
 
 #[Test]
@@ -21,24 +27,37 @@ final class ProduceMessageTest
         $topicRegistry = (new TopicRegistry())
             ->add(new Topic('production.fact.products.1', 'products'));
 
-        $routes = PublisherRoutesBuilder::make($topicRegistry)
-            ->add(ProducerMessageFaker::class, 'products')
-            ->build();
+        $connectionFaker = new ConnectionFaker($topicRegistry);
 
-        $busFaker = BusFaker::make(
-            $topicRegistry,
-            new TestoAssertionDriver(),
-            new PublisherFactory(new PublisherStreamFactory(), $routes),
+        $routes = (new PublisherRoutes())
+            ->add(new Route(ProducerMessageFaker::class, $topicRegistry->get('products')));
+
+        $bus = new Bus(
+            new ThreadRegistry(
+                new ConnectionRegistryFaker($connectionFaker),
+                new ThreadFactory(
+                    new ListenerFactory(
+                        new ConsumerStreamFactory(),
+                    ),
+                    new PublisherFactory(
+                        new ProducerStreamFactory(),
+                        $routes
+                    ),
+                )
+            ),
+            'default'
         );
 
-        $busFaker->publish(new ProducerMessageFaker('test-message', ['foo' => 'bar'], 5));
+        $bus->publish(new ProducerMessageFaker('test-message', ['foo' => 'bar'], 5));
 
-        $busFaker->assertPublishedTimes(ProducerMessageFaker::class, 1);
+        Assert::array($connectionFaker->publishedMessages)
+            ->hasCount(1)
+            ->hasKeys('production.fact.products.1');
 
-        $busFaker->assertPublished(ProducerMessageFaker::class, function (ProducerMessage $message) {
-            return $message->payload == 'test-message'
-                && $message->partition == 5
-                && $message->headers == ['foo' => 'bar'];
-        });
+        $message = $connectionFaker->publishedMessages['production.fact.products.1'][0];
+
+        Assert::equals($message->payload, 'test-message');
+        Assert::equals($message->partition, 5);
+        Assert::equals($message->headers, ['foo' => 'bar']);
     }
 }

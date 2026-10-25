@@ -4,13 +4,13 @@ namespace KafkaBus\Core\Consumers;
 
 use KafkaBus\Core\Consumers\Commiters\CommiterInterface;
 use KafkaBus\Core\Consumers\Messages\ConsumerMessageConverter;
-use KafkaBus\Core\Consumers\Messages\ConsumerMessageInterface;
+use KafkaBus\Core\Interfaces\Consumers\ConsumerInterface;
 use KafkaBus\Core\Exceptions\Consumers\ConsumerException;
 use KafkaBus\Core\Exceptions\Consumers\MessageConsumerException;
-use KafkaBus\Core\Utils\RetryRepeater;
+use KafkaBus\Core\Interfaces\Consumers\Messages\ConsumerMessageInterface;
+use KafkaBus\Core\Support\RetryRepeater;
 use RdKafka\Exception;
 use RdKafka\KafkaConsumer;
-use Throwable;
 
 class Consumer implements ConsumerInterface
 {
@@ -18,26 +18,27 @@ class Consumer implements ConsumerInterface
 
     /**
      * @param KafkaConsumer $consumer
+     * @param list<string> $topicNames
      * @param CommiterInterface $commiter
      * @param RetryRepeater $retryRepeater
      * @param int $consumerTimeout
+     *
+     * @throws Exception
      */
     public function __construct(
         protected KafkaConsumer     $consumer,
+        protected array             $topicNames,
         protected CommiterInterface $commiter,
         protected RetryRepeater     $retryRepeater = new RetryRepeater(),
         protected int               $consumerTimeout = 2000
     ) {
         $this->consumerMessageNormalizer = new ConsumerMessageConverter();
-    }
-
-    public function getConcrete(): KafkaConsumer
-    {
-        return $this->consumer;
+        $this->consumer->subscribe($this->topicNames);
     }
 
     public function __destruct()
     {
+        $this->consumer->unsubscribe();
         $this->consumer->close();
     }
 
@@ -59,36 +60,9 @@ class Consumer implements ConsumerInterface
         }
     }
 
-    /**
-     * @param ConsumerMessageInterface $consumerMessage
-     * @return void
-     *
-     * @throws Throwable
-     */
     public function commit(ConsumerMessageInterface $consumerMessage): void
     {
         $this->retryRepeater
             ->execute(fn () => $this->commiter->commit($consumerMessage));
-    }
-
-    /**
-     * @param list<string> $topicNames
-     * @return void
-     *
-     * @throws Exception
-     */
-    public function subscribe(array $topicNames): void
-    {
-        $this->consumer->subscribe($topicNames);
-    }
-
-    /**
-     * @return void
-     *
-     * @throws Exception
-     */
-    public function unsubscribe(): void
-    {
-        $this->consumer->unsubscribe();
     }
 }

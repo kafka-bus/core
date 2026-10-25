@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace KafkaBus\Core\Connections\Config;
 
+use KafkaBus\Core\Interfaces\Connections\SaslConfigurationConfigInterface;
+
 final readonly class UserCredentialsConfig implements SaslConfigurationConfigInterface
 {
     public function __construct(

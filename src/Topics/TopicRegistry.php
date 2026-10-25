@@ -7,7 +7,7 @@ use KafkaBus\Core\Exceptions\TopicCannotResolvedException;
 final class TopicRegistry
 {
     /**
-     * @var array<string, Topic>
+     * @var Topic[]
      */
     protected array $topics = [];
 
@@ -34,13 +34,5 @@ final class TopicRegistry
     {
         return $this->topics[$topicKey]
             ?? throw TopicCannotResolvedException::topicNotFound($topicKey);
-    }
-
-    /**
-     * @return list<Topic>
-     */
-    public function all(): array
-    {
-        return array_values($this->topics);
     }
 }
