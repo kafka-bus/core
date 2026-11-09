@@ -2,10 +2,9 @@
 
 namespace KafkaBus\Core\Producers;
 
-use KafkaBus\Core\Interfaces\Producers\ProducerInterface;
 use KafkaBus\Core\Exceptions\Producers\CannotFlushProducerException;
 use KafkaBus\Core\Producers\Messages\ProducerMessage;
-use KafkaBus\Core\Support\RetryRepeater;
+use KafkaBus\Core\Utils\RetryRepeater;
 use KafkaBus\Core\Topics\Topic;
 use RdKafka\Producer as KafkaProducer;
 use RdKafka\ProducerTopic;
@@ -43,7 +42,7 @@ class Producer implements ProducerInterface
             headers: $producerMessage->headers
         );
 
-        $this->producer->poll($this->timeout);
+        $this->producer->poll(0);
     }
 
     private function flush(): void

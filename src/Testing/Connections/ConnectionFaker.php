@@ -3,18 +3,17 @@
 namespace KafkaBus\Core\Testing\Connections;
 
 use KafkaBus\Core\Connections\Config\Options;
+use KafkaBus\Core\Connections\ConnectionInterface;
 use KafkaBus\Core\Consumers\ConsumerConfig;
+use KafkaBus\Core\Consumers\ConsumerInterface;
 use KafkaBus\Core\Consumers\Messages\ConsumerMessageConverter;
-use KafkaBus\Core\Interfaces\Connections\ConnectionInterface;
-use KafkaBus\Core\Interfaces\Consumers\ConsumerInterface;
-use KafkaBus\Core\Interfaces\Consumers\Messages\ConsumerMessageInterface;
-use KafkaBus\Core\Interfaces\Producers\ProducerInterface;
+use KafkaBus\Core\Consumers\Messages\ConsumerMessageInterface;
 use KafkaBus\Core\Producers\Messages\ProducerMessage;
 use KafkaBus\Core\Producers\ProducerConfig;
+use KafkaBus\Core\Producers\ProducerInterface;
 use KafkaBus\Core\Testing\ConsumerFaker;
 use KafkaBus\Core\Testing\ProducerFaker;
 use KafkaBus\Core\Topics\Topic;
-use KafkaBus\Core\Topics\TopicRegistry;
 use RdKafka\Message;
 use RdKafka\Message as KafkaMessage;
 
@@ -35,32 +34,19 @@ class ConnectionFaker implements ConnectionInterface
      */
     protected array $consumeMessages = [];
 
-    private Options $options;
-
-    private string $name;
-
-    public function __construct(private readonly TopicRegistry $topicRegistry)
-    {
-        $this->name = 'faker';
-        $this->options = new Options([]);
-    }
-
     public function addMessage(KafkaMessage $message): void
     {
-        $message->topic_name = $this->topicRegistry
-            ->tryGetTopicName($message->topic_name);
-
         $this->consumeMessages[] = $message;
     }
 
     public function getName(): string
     {
-        return $this->name;
+        return 'faker';
     }
 
     public function getOptions(): Options
     {
-        return $this->options;
+        return new Options();
     }
 
     public function createProducer(Topic $topic, ProducerConfig $config): ProducerInterface
@@ -68,7 +54,7 @@ class ConnectionFaker implements ConnectionInterface
         return new ProducerFaker($this, $topic->name);
     }
 
-    public function createConsumer(array $topics, ConsumerConfig $config): ConsumerInterface
+    public function createConsumer(ConsumerConfig $config): ConsumerInterface
     {
         return new ConsumerFaker($this, new ConsumerMessageConverter(), $this->consumeMessages);
     }
